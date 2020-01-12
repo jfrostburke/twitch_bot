@@ -31,10 +31,9 @@ server.send(pass_string)
 server.send(user_string)
 server.send(join_string)
 
-dat = [-1] # Off the plot, but starts line
-fig = plt.figure(figsize=(5,5))
+fig_size = 8
+fig = plt.figure(figsize=(fig_size,fig_size),facecolor='white')
 ax = fig.add_subplot(111)
-Ln, = ax.plot(dat)
 # Twitch emote size is 28x28
 # SMB1 sprite block is 16x16
 length = 16
@@ -44,30 +43,32 @@ ax.set_xticks(np.arange(length)+0.5)
 ax.set_xticklabels([str(x+1) for x in np.arange(length)])
 ax.set_yticks(np.arange(length)+0.5)
 ax.set_yticklabels([str(x+1) for x in np.arange(length)])
-ax.xaxis.grid(ls='--',alpha=0.5)
-ax.yaxis.grid(ls='--',alpha=0.5)
+ax.xaxis.grid(ls='--',alpha=0.5,zorder=1)
+ax.yaxis.grid(ls='--',alpha=0.5,zorder=1)
 plt.ion()
 plt.show()
 while True:
     msg_raw = str(server.recv(2048))
     try:
-        msg_clean = msg_raw.split(' ')[3][1:-2]
+        msg_clean = msg_raw.split(' ')[3:]
+        msg_clean[-1] = msg_clean[-1][:-2] # clean newline chars
+        if msg_clean[0] != ':!draw':
+            print msg_clean
+            print "not drawing"
+            continue
+        else:
+            x = int(msg_clean[1])-1
+            y = int(msg_clean[2])-1
+            color = msg_clean[3]
     except:
+        print "something else went wrong"
         continue
 
-    print msg_raw
-    print msg_clean
-    #add: x and y positions
-    #add: random placement if just color
-    dat.append(len(msg_clean))
     try:
-        ax.add_collection(
-            PatchCollection(
-                [Rectangle(xy=(len(dat),len(dat)),width=1,height=1)],
-                facecolor=msg_clean,
-            )
-        )
+        rect = Rectangle(xy=(x,y),width=1,height=1,color=color,lw=0,alpha=1.0,zorder=10)
+        ax.add_patch(rect)
     except:
+        print "couldn't draw"
         continue
     plt.pause(0.1)
     
